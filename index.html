@@ -1,0 +1,834 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Escape Room: Aorta Abdominal - Anatomía</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; background: linear-gradient(135deg, #e8f4f8 0%, #f0f7ff 50%, #faf0e6 100%); min-height: 100vh; color: #2c3e50; }
+    
+    .screen { display: none; min-height: 100vh; padding: 20px; }
+    .screen.active { display: flex; flex-direction: column; align-items: center; justify-content: center; }
+    
+    .card { background: white; border-radius: 16px; padding: 40px; box-shadow: 0 8px 32px rgba(74, 144, 226, 0.12); border: 1px solid #c2e0ff; max-width: 600px; width: 100%; }
+    .card-lg { max-width: 900px; }
+    
+    h1 { color: #2c3e50; font-size: 2.2em; margin-bottom: 10px; }
+    h2 { color: #34495e; font-size: 1.6em; margin-bottom: 15px; }
+    h3 { color: #4a90e2; margin: 20px 0 10px; }
+    
+    .btn { padding: 12px 28px; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: 600; transition: all 0.3s; margin: 5px; }
+    .btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+    .btn-primary { background: linear-gradient(135deg, #4a90e2, #357abd); color: white; }
+    .btn-success { background: linear-gradient(135deg, #50c878, #3da35d); color: white; }
+    .btn-danger { background: linear-gradient(135deg, #ff6b6b, #e74c3c); color: white; }
+    .btn-warning { background: linear-gradient(135deg, #f39c12, #e67e22); color: white; }
+    .btn-dark { background: linear-gradient(135deg, #34495e, #2c3e50); color: white; }
+    
+    .form-group { margin-bottom: 18px; }
+    label { display: block; margin-bottom: 6px; font-weight: 600; color: #555; }
+    input, select { width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 16px; transition: border 0.3s; }
+    input:focus, select:focus { border-color: #4a90e2; outline: none; }
+    
+    .progress-container { width: 100%; margin: 20px 0; }
+    .progress-bar { height: 12px; background: #e8edf2; border-radius: 6px; overflow: hidden; }
+    .progress-fill { height: 100%; background: linear-gradient(90deg, #4a90e2, #50c878); border-radius: 6px; transition: width 0.5s ease; }
+    .progress-text { text-align: center; margin-top: 8px; font-weight: 600; color: #4a90e2; }
+    
+    .timer { font-size: 1.4em; font-weight: bold; color: #e74c3c; text-align: center; margin: 10px 0; }
+    
+    .puzzle-container { margin: 20px 0; }
+    .option-card { padding: 14px 18px; margin: 8px 0; background: #f8fafc; border: 2px solid #e2e8f0; border-radius: 10px; cursor: pointer; transition: all 0.3s; user-select: none; }
+    .option-card:hover { background: #e8f4ff; border-color: #4a90e2; }
+    .option-card.selected { background: #d4e6ff; border-color: #4a90e2; }
+    .option-card.correct { background: #d4edda; border-color: #28a745; color: #155724; }
+    .option-card.incorrect { background: #f8d7da; border-color: #dc3545; color: #721c24; }
+    .option-card.disabled { pointer-events: none; opacity: 0.7; }
+    
+    .hidden { display: none !important; }
+    
+    .feedback { padding: 12px; border-radius: 8px; margin: 10px 0; font-weight: 600; }
+    .feedback.success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+    .feedback.error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+    
+    .code-display { background: #2c3e50; color: #50c878; padding: 15px; border-radius: 8px; font-family: monospace; font-size: 1.3em; text-align: center; margin: 15px 0; letter-spacing: 3px; }
+    
+    table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+    th, td { padding: 12px; text-align: left; border-bottom: 1px solid #e0e0e0; }
+    th { background: #f0f7ff; color: #2c3e50; font-weight: 700; }
+    tr:hover { background: #f8fafc; }
+    
+    .badge { display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 0.85em; font-weight: 600; }
+    .badge-success { background: #d4edda; color: #155724; }
+    .badge-warning { background: #fff3cd; color: #856404; }
+    
+    .level-header { display: flex; align-items: center; gap: 15px; margin-bottom: 20px; }
+    .level-num { background: #4a90e2; color: white; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.2em; }
+    
+    .drag-container { display: flex; gap: 20px; margin: 20px 0; flex-wrap: wrap; }
+    .drag-list { flex: 1; min-width: 200px; }
+    .drag-item { padding: 10px 14px; background: white; border: 2px solid #4a90e2; border-radius: 8px; margin: 6px 0; cursor: grab; transition: all 0.2s; }
+    .drag-item:active { cursor: grabbing; transform: scale(1.02); }
+    .drag-item.dragging { opacity: 0.5; }
+    .drop-zone { min-height: 60px; border: 2px dashed #ccc; border-radius: 8px; padding: 10px; margin: 6px 0; transition: all 0.3s; }
+    .drop-zone.drag-over { border-color: #4a90e2; background: #e8f4ff; }
+    
+    .hint-btn { background: none; border: 1px solid #f39c12; color: #f39c12; padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 14px; }
+    .hint-text { background: #fff8e1; border-left: 4px solid #f39c12; padding: 10px 14px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+    
+    .anatomy-diagram { background: #f8fafc; border-radius: 12px; padding: 20px; margin: 20px 0; text-align: center; border: 1px solid #e2e8f0; }
+    .anatomy-diagram pre { font-family: monospace; font-size: 0.9em; line-height: 1.4; color: #2c3e50; white-space: pre; overflow-x: auto; }
+    
+    .score-display { font-size: 1.1em; color: #50c878; font-weight: 700; }
+    .lives { font-size: 1.2em; margin: 10px 0; }
+    .heart { color: #e74c3c; }
+    
+    @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+    .pulse { animation: pulse 0.5s ease; }
+    
+    @keyframes celebrate { 0% { transform: scale(0.8); opacity: 0; } 50% { transform: scale(1.1); } 100% { transform: scale(1); opacity: 1; } }
+    .celebrate { animation: celebrate 0.6s ease; }
+    
+    .tabs { display: flex; gap: 0; margin-bottom: 20px; }
+    .tab { padding: 10px 20px; background: #e8edf2; border: none; cursor: pointer; font-weight: 600; color: #555; border-radius: 8px 8px 0 0; }
+    .tab.active { background: white; color: #4a90e2; border-bottom: 3px solid #4a90e2; }
+    .tab-content { display: none; background: white; padding: 20px; border-radius: 0 8px 8px 8px; }
+    .tab-content.active { display: block; }
+  </style>
+</head>
+<body>
+
+  <!-- PANTALLA 1: MENÚ PRINCIPAL -->
+  <div class="screen active" id="mainMenu">
+    <div class="card" style="text-align: center;">
+      <h1>🫀 Escape Room: Aorta Abdominal</h1>
+      <p style="color: #666; margin: 15px 0 30px; font-size: 1.1em;">Domina la anatomía vascular abdominal</p>
+      <button class="btn btn-primary" style="width: 100%; margin: 8px 0; font-size: 1.1em;" onclick="showScreen('studentRegister')">📝 Registro de Estudiante</button>
+      <button class="btn btn-success" style="width: 100%; margin: 8px 0; font-size: 1.1em;" onclick="showScreen('studentLogin')">🔑 Ingreso de Estudiante</button>
+      <hr style="margin: 25px 0; border: none; border-top: 1px solid #e0e0e0;">
+      <button class="btn btn-dark" style="width: 100%; margin: 8px 0;" onclick="showScreen('adminLogin')">🛡️ Acceso Administrador</button>
+    </div>
+  </div>
+
+  <!-- PANTALLA: REGISTRO ESTUDIANTE -->
+  <div class="screen" id="studentRegister">
+    <div class="card">
+      <h2>Registro de Estudiante</h2>
+      <form id="regForm" onsubmit="registerStudent(event)">
+        <div class="form-group">
+          <label>Nombre Completo</label>
+          <input type="text" id="regName" required placeholder="Ej: Juan Pérez">
+        </div>
+        <div class="form-group">
+          <label>ID de Estudiante</label>
+          <input type="text" id="regId" required placeholder="Ej: EST-2026-001">
+        </div>
+        <div class="form-group">
+          <label>Email (opcional)</label>
+          <input type="email" id="regEmail" placeholder="correo@universidad.edu">
+        </div>
+        <button type="submit" class="btn btn-primary" style="width: 100%;">Registrarse</button>
+        <button type="button" class="btn" style="width: 100%; margin-top: 10px; background: #e8edf2;" onclick="showScreen('mainMenu')">Volver</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- PANTALLA: LOGIN ESTUDIANTE -->
+  <div class="screen" id="studentLogin">
+    <div class="card">
+      <h2>Ingreso de Estudiante</h2>
+      <form onsubmit="loginStudent(event)">
+        <div class="form-group">
+          <label>ID de Estudiante</label>
+          <input type="text" id="loginId" required placeholder="Ej: EST-2026-001">
+        </div>
+        <button type="submit" class="btn btn-success" style="width: 100%;">Ingresar</button>
+        <button type="button" class="btn" style="width: 100%; margin-top: 10px; background: #e8edf2;" onclick="showScreen('mainMenu')">Volver</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- PANTALLA: LOGIN ADMIN -->
+  <div class="screen" id="adminLogin">
+    <div class="card">
+      <h2>Acceso Administrador</h2>
+      <form onsubmit="loginAdmin(event)">
+        <div class="form-group">
+          <label>Usuario</label>
+          <input type="text" id="adminUser" required value="wittus">
+        </div>
+        <div class="form-group">
+          <label>Contraseña</label>
+          <input type="password" id="adminPass" required value="123456">
+        </div>
+        <button type="submit" class="btn btn-dark" style="width: 100%;">Ingresar</button>
+        <button type="button" class="btn" style="width: 100%; margin-top: 10px; background: #e8edf2;" onclick="showScreen('mainMenu')">Volver</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- PANTALLA: PANEL ADMIN -->
+  <div class="screen" id="adminPanel">
+    <div class="card card-lg">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <h2>Panel de Administración</h2>
+        <button class="btn btn-danger" onclick="logout()">Cerrar Sesión</button>
+      </div>
+      <div class="tabs">
+        <button class="tab active" onclick="switchTab('students', this)">Estudiantes</button>
+        <button class="tab" onclick="switchTab('stats', this)">Estadísticas</button>
+        <button class="tab" onclick="switchTab('settings', this)">Configuración</button>
+      </div>
+      <div id="tab-students" class="tab-content active">
+        <table>
+          <thead>
+            <tr>
+              <th>Nombre</th>
+              <th>ID</th>
+              <th>Nivel</th>
+              <th>Tiempo</th>
+              <th>Puntaje</th>
+              <th>Estado</th>
+            </tr>
+          </thead>
+          <tbody id="adminStudentsBody"></tbody>
+        </table>
+        <button class="btn btn-danger" onclick="resetAllData()" style="margin-top: 15px;">Reiniciar Todos los Datos</button>
+      </div>
+      <div id="tab-stats" class="tab-content">
+        <h3>Estadísticas Generales</h3>
+        <div id="statsContent"></div>
+      </div>
+      <div id="tab-settings" class="tab-content">
+        <h3>Configuración del Escape Room</h3>
+        <div class="form-group">
+          <label>Tiempo límite por nivel (minutos)</label>
+          <input type="number" id="cfgTime" value="10" min="1" max="60">
+        </div>
+        <div class="form-group">
+          <label>Intentos permitidos por nivel</label>
+          <input type="number" id="cfgAttempts" value="3" min="1" max="10">
+        </div>
+        <button class="btn btn-primary" onclick="saveSettings()">Guardar Configuración</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PANTALLA: ESCAPE ROOM -->
+  <div class="screen" id="gameScreen">
+    <div class="card card-lg">
+      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+        <div>
+          <h2 id="gameTitle">Escape Room</h2>
+          <p id="gameStudent"></p>
+        </div>
+        <div style="text-align: right;">
+          <div class="timer" id="timer">05:00</div>
+          <div class="score-display">Puntaje: <span id="score">0</span></div>
+          <div class="lives">Vidas: <span id="lives">❤️❤️❤️</span></div>
+        </div>
+      </div>
+      <div class="progress-container">
+        <div class="progress-bar"><div class="progress-fill" id="gameProgress" style="width: 0%"></div></div>
+        <div class="progress-text" id="progressText">Nivel 1 de 5</div>
+      </div>
+      <div id="levelContent"></div>
+      <div id="gameFeedback"></div>
+      <div id="levelCodeSection" class="hidden">
+        <div class="code-display" id="levelCodeText"></div>
+        <button class="btn btn-success" id="nextLevelBtn" onclick="nextLevel()">Siguiente Nivel →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PANTALLA: VICTORIA -->
+  <div class="screen" id="victoryScreen">
+    <div class="card" style="text-align: center;" class="celebrate">
+      <h1 style="color: #50c878;">🎉 ¡ESCAPE COMPLETADO! 🎉</h1>
+      <div id="victoryContent"></div>
+      <button class="btn btn-primary" onclick="showScreen('mainMenu')" style="margin-top: 20px;">Volver al Menú</button>
+    </div>
+  </div>
+
+<script>
+// ============ DATOS Y ESTADO ============
+const ADMIN_USER = 'wittus';
+const ADMIN_PASS = '123456';
+const STORAGE_KEY = 'aorta_escape_room';
+
+let state = {
+  students: [],
+  currentStudent: null,
+  settings: { timePerLevel: 10, attemptsPerLevel: 3 },
+  adminLoggedIn: false
+};
+
+// Cargar estado
+function loadState() {
+  const saved = localStorage.getItem(STORAGE_KEY);
+  if (saved) state = { ...state, ...JSON.parse(saved) };
+}
+function saveState() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+}
+
+// ============ NAVEGACIÓN ============
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  if (id === 'adminPanel') loadAdminData();
+  if (id === 'gameScreen' && state.currentStudent) startGame();
+}
+
+// ============ ESTUDIANTES ============
+function registerStudent(e) {
+  e.preventDefault();
+  const name = document.getElementById('regName').value.trim();
+  const id = document.getElementById('regId').value.trim();
+  if (state.students.some(s => s.id === id)) return alert('Este ID ya está registrado');
+  const student = {
+    name, id,
+    email: document.getElementById('regEmail').value,
+    level: 1, score: 0, lives: 3, startTime: new Date().toISOString(),
+    completedLevels: [], timePerLevel: {}, attemptsPerLevel: {}
+  };
+  state.students.push(student);
+  saveState();
+  state.currentStudent = student;
+  showScreen('gameScreen');
+}
+
+function loginStudent(e) {
+  e.preventDefault();
+  const id = document.getElementById('loginId').value.trim();
+  const student = state.students.find(s => s.id === id);
+  if (!student) return alert('Estudiante no encontrado');
+  state.currentStudent = student;
+  showScreen('gameScreen');
+}
+
+// ============ ADMIN ============
+function loginAdmin(e) {
+  e.preventDefault();
+  const user = document.getElementById('adminUser').value;
+  const pass = document.getElementById('adminPass').value;
+  if (user === ADMIN_USER && pass === ADMIN_PASS) {
+    state.adminLoggedIn = true;
+    showScreen('adminPanel');
+  } else {
+    alert('Credenciales incorrectas');
+  }
+}
+
+function loadAdminData() {
+  const tbody = document.getElementById('adminStudentsBody');
+  tbody.innerHTML = '';
+  state.students.forEach(s => {
+    const totalTime = s.timePerLevel ? Object.values(s.timePerLevel).reduce((a,b) => a+b, 0) : 0;
+    const status = s.level > 5 ? '<span class="badge badge-success">Completado</span>' : `<span class="badge badge-warning">Nivel ${s.level}/5</span>`;
+    tbody.innerHTML += `<tr>
+      <td>${s.name}</td><td>${s.id}</td><td>${s.level}/5</td>
+      <td>${Math.round(totalTime)} min</td><td>${s.score}</td><td>${status}</td>
+    </tr>`;
+  });
+  // Stats
+  const completed = state.students.filter(s => s.level > 5).length;
+  document.getElementById('statsContent').innerHTML = `
+    <p><strong>Total estudiantes:</strong> ${state.students.length}</p>
+    <p><strong>Completaron el escape:</strong> ${completed}</p>
+    <p><strong>Promedio puntaje:</strong> ${state.students.length ? Math.round(state.students.reduce((a,s)=>a+s.score,0)/state.students.length) : 0}</p>
+  `;
+}
+
+function resetAllData() {
+  if (confirm('¿Seguro que deseas eliminar TODOS los datos?')) {
+    state.students = [];
+    saveState();
+    loadAdminData();
+  }
+}
+
+function switchTab(tab, btn) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('tab-' + tab).classList.add('active');
+}
+
+function saveSettings() {
+  state.settings.timePerLevel = parseInt(document.getElementById('cfgTime').value);
+  state.settings.attemptsPerLevel = parseInt(document.getElementById('cfgAttempts').value);
+  saveState();
+  alert('Configuración guardada');
+}
+
+// ============ JUEGO ============
+let currentLevel = 1;
+let timerInterval = null;
+let timeLeft = 0;
+let levelAttempts = 0;
+
+function startGame() {
+  const s = state.currentStudent;
+  document.getElementById('gameStudent').textContent = `Estudiante: ${s.name} | ID: ${s.id}`;
+  currentLevel = s.level > 5 ? 1 : s.level;
+  loadLevel(currentLevel);
+}
+
+function loadLevel(lvl) {
+  currentLevel = lvl;
+  levelAttempts = 0;
+  clearInterval(timerInterval);
+  timeLeft = state.settings.timePerLevel * 60;
+  updateTimer();
+  timerInterval = setInterval(() => {
+    timeLeft--;
+    updateTimer();
+    if (timeLeft <= 0) {
+      clearInterval(timerInterval);
+      loseLife();
+    }
+  }, 1000);
+  
+  document.getElementById('gameProgress').style.width = `${((lvl-1)/5)*100}%`;
+  document.getElementById('progressText').textContent = `Nivel ${lvl} de 5`;
+  document.getElementById('score').textContent = state.currentStudent.score;
+  document.getElementById('lives').textContent = '❤️'.repeat(state.currentStudent.lives) + '🖤'.repeat(3 - state.currentStudent.lives);
+  document.getElementById('levelCodeSection').classList.add('hidden');
+  document.getElementById('gameFeedback').innerHTML = '';
+  
+  const content = document.getElementById('levelContent');
+  content.innerHTML = getLevelContent(lvl);
+  document.getElementById('gameTitle').textContent = getLevelTitle(lvl);
+}
+
+function updateTimer() {
+  const min = Math.floor(timeLeft / 60);
+  const sec = timeLeft % 60;
+  document.getElementById('timer').textContent = `${min.toString().padStart(2,'0')}:${sec.toString().padStart(2,'0')}`;
+  if (timeLeft <= 30) document.getElementById('timer').style.color = '#e74c3c';
+  else document.getElementById('timer').style.color = '#e74c3c';
+}
+
+function getLevelTitle(lvl) {
+  const titles = {
+    1: 'Nivel 1: Ramas Parietales',
+    2: 'Nivel 2: Ramas Viscerales Impares',
+    3: 'Nivel 3: Ramas Viscerales Pares',
+    4: 'Nivel 4: Circuitos Anastomóticos',
+    5: 'Nivel 5: El Gran Escape'
+  };
+  return titles[lvl];
+}
+
+function getLevelContent(lvl) {
+  switch(lvl) {
+    case 1: return `
+      <div class="anatomy-diagram">
+        <pre>
+      AORTA ABDOMINAL
+      ─────────────────
+      │
+      ├─ 🫁 Frénicas Inferiores (2)
+      ├─ 💪 Lumbares (4 pares)
+      └─ 🦴 Sacra Media
+        </pre>
+      </div>
+      <p><strong>Selecciona TODAS las ramas parietales de la aorta abdominal:</strong></p>
+      <div class="puzzle-container">
+        <div class="option-card" onclick="selectOption(this, true)">Arterias Frénicas Inferiores</div>
+        <div class="option-card" onclick="selectOption(this, false)">Arteria Celíaca (Tronco Celíaco)</div>
+        <div class="option-card" onclick="selectOption(this, true)">Arterias Lumbares (4 pares)</div>
+        <div class="option-card" onclick="selectOption(this, false)">Arteria Mesentérica Superior</div>
+        <div class="option-card" onclick="selectOption(this, true)">Arteria Sacra Media</div>
+        <div class="option-card" onclick="selectOption(this, false)">Arterias Renales</div>
+        <div class="option-card" onclick="selectOption(this, false)">Arteria Mesentérica Inferior</div>
+        <div class="option-card" onclick="selectOption(this, true)">Arterias Suprarrenales Inferiores</div>
+      </div>
+      <button class="btn btn-primary" onclick="checkLevel1()">Verificar Respuesta</button>
+      <div style="margin-top: 15px;">
+        <button class="hint-btn" onclick="showHint(1)">💡 Pista</button>
+        <div id="hint1" class="hint-text hidden">Las ramas parietales irrigan la pared corporal: diafragma, músculos lumbares y pared pelviana.</div>
+      </div>`;
+    
+    case 2: return `
+      <div class="anatomy-diagram">
+        <pre>
+      RAMAS VISCERALES IMPARES
+      ──────────────────────────
+      🔹 CELÍACA (T12)
+         ├─ Gástrica Izquierda
+         ├─ Esplénica
+         │   ├─ Pancreáticas
+         │   └─ Gástricas Cortas
+         └─ Hepática Común
+             ├─ Hepática Propia
+             └─ Gástrica Derecha
+      
+      🔹 MESENTÉRICA SUPERIOR (L1)
+         ├─ Pancreatoduodenales
+         ├─ Yeyunales e Ileales
+         ├─ Ileocólica
+         ├─ Cólica Derecha
+         └─ Cólica Media
+      
+      🔹 MESENTÉRICA INFERIOR (L3)
+         ├─ Cólica Izquierda
+         ├─ Sigmoideas
+         └─ Rectal Superior
+        </pre>
+      </div>
+      <p><strong>Territorios de irrigación (Selecciona la opción correcta):</strong></p>
+      <div class="form-group">
+        <label>1. Territorio de la Arteria Celíaca (Foregut):</label>
+        <select id="q2_1">
+          <option value="">Selecciona...</option>
+          <option value="1">Esófago distal hasta duodeno (hasta Ampolla de Vater)</option>
+          <option value="0">Duodeno distal hasta colon transverso distal</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>2. Territorio de la Arteria Mesentérica Superior (Midgut):</label>
+        <select id="q2_2">
+          <option value="">Selecciona...</option>
+          <option value="1">Duodeno distal hasta colon transverso (2/3 proximal)</option>
+          <option value="0">Colon transverso distal hasta recto superior</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>3. Territorio de la Arteria Mesentérica Inferior (Hindgut):</label>
+        <select id="q2_3">
+          <option value="">Selecciona...</option>
+          <option value="0">Esófago distal hasta duodeno</option>
+          <option value="1">Colon transverso distal (1/3) hasta recto superior</option>
+        </select>
+      </div>
+      <p><strong>¿Cuál NO es rama de la Arteria Esplénica?</strong></p>
+      <div class="puzzle-container">
+        <div class="option-card" onclick="selectOption(this, true)">Gástrica Derecha</div>
+        <div class="option-card" onclick="selectOption(this, false)">Gástricas Cortas</div>
+        <div class="option-card" onclick="selectOption(this, false)">Pancreáticas</div>
+        <div class="option-card" onclick="selectOption(this, false)">Ramos para el páncreas</div>
+      </div>
+      <button class="btn btn-primary" onclick="checkLevel2()">Verificar Todo</button>
+      <div style="margin-top: 15px;">
+        <button class="hint-btn" onclick="showHint(2)">💡 Pista</button>
+        <div id="hint2" class="hint-text hidden">Foregut = derivados del intestino anterior. Midgut = intestino medio. Hindgut = intestino posterior. La gástrica derecha nace de la hepática común.</div>
+      </div>`;
+    
+    case 3: return `
+      <div class="anatomy-diagram">
+        <pre>
+      RAMAS VISCERALES PARES
+      ───────────────────────
+      🔸 SUPRRENALES (T12)
+         Irriga: Glándulas suprarrenales
+      
+      🔸 RENALES (L1-L2)
+         ├─ Rama anterior (glomérulos)
+         └─ Rama posterior
+         Irriga: Riñones + glándulas suprarrenales
+      
+      🔸 GONADALES (L2)
+         ├─ Testiculares (en conducto inguinal)
+         └─ Ováricas (en ligamento suspensorio)
+         Irriga: Gónadas
+        </pre>
+      </div>
+      <p><strong>Ordena craneocaudalmente las ramas viscerales pares:</strong></p>
+      <div class="drag-container">
+        <div class="drag-list">
+          <p><strong>Elementos desordenados:</strong></p>
+          <div class="drag-item" draggable="true" data-value="gonadal">Gonadales</div>
+          <div class="drag-item" draggable="true" data-value="renal">Renales</div>
+          <div class="drag-item" draggable="true" data-value="suprarenal">Suprarrenales</div>
+        </div>
+        <div class="drag-list">
+          <p><strong>Arrástralas aquí (de arriba hacia abajo):</strong></p>
+          <div class="drop-zone" id="dropZone1" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
+          <div class="drop-zone" id="dropZone2" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
+          <div class="drop-zone" id="dropZone3" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
+        </div>
+      </div>
+      <p><strong>¿Qué arteria da la rama testicular/ovárica?</strong></p>
+      <div class="puzzle-container">
+        <div class="option-card" onclick="selectOption(this, false)">Arteria Celíaca</div>
+        <div class="option-card" onclick="selectOption(this, false)">Arteria Mesentérica Superior</div>
+        <div class="option-card" onclick="selectOption(this, true)">Aorta Abdominal (directo)</div>
+        <div class="option-card" onclick="selectOption(this, false)">Arteria Mesentérica Inferior</div>
+      </div>
+      <button class="btn btn-primary" onclick="checkLevel3()">Verificar Todo</button>
+      <div style="margin-top: 15px;">
+        <button class="hint-btn" onclick="showHint(3)">💡 Pista</button>
+        <div id="hint3" class="hint-text hidden">Las suprarrenales salen a nivel de T12, las renales a nivel de L1-L2, y las gonadales a nivel de L2.</div>
+      </div>`;
+    
+    case 4: return `
+      <div class="anatomy-diagram">
+        <pre>
+      CIRCUITOS ANASTOMÓTICOS
+      ────────────────────────
+      🔄 ENTRE AMS y AMI:
+         • Arco de Riolan (anastomosis transversa)
+         • Arteria Marginal de Drummond
+         • Anastomosis cólica (derecha-media-izquierda)
+      
+      🔄 EN EL RECTO:
+         • AMS → Arteria Cólica Derecha → Cólica Media
+         • AMI → Arteria Rectal Superior
+         • Interna → Arteria Rectal Media
+         • Interna → Arteria Rectal Inferior
+         (Anastomosis de Sudeck en recto)
+      
+      🔄 PANCREATODUODENAL:
+         • Superior (Celíaca) ↔ Inferior (AMS)
+      
+      🔄 PERICUERPO:
+         • Frénicas ↔ Epigástricas Superiores
+      </pre>
+      </div>
+      <p><strong>Selecciona las anastomosis ENTRE AMS y AMI:</strong></p>
+      <div class="puzzle-container">
+        <div class="option-card" onclick="selectOption(this, true)">Arco de Riolan</div>
+        <div class="option-card" onclick="selectOption(this, true)">Arteria Marginal de Drummond</div>
+        <div class="option-card" onclick="selectOption(this, false)">Anastomosis Pancreatoduodenal</div>
+        <div class="option-card" onclick="selectOption(this, true)">Anastomosis Cólica Media-Izquierda</div>
+        <div class="option-card" onclick="selectOption(this, false)">Anastomosis Rectal Superior-Inferior</div>
+      </div>
+      <p><strong>¿Qué nivel de la AMS irriga el colon transverso?</strong></p>
+      <div class="puzzle-container">
+        <div class="option-card" onclick="selectOption(this, false)">Cólica Derecha</div>
+        <div class="option-card" onclick="selectOption(this, true)">Cólica Media</div>
+        <div class="option-card" onclick="selectOption(this, false)">Cólica Izquierda</div>
+        <div class="option-card" onclick="selectOption(this, false)">Ileocólica</div>
+      </div>
+      <button class="btn btn-primary" onclick="checkLevel4()">Verificar</button>
+      <div style="margin-top: 15px;">
+        <button class="hint-btn" onclick="showHint(4)">💡 Pista</button>
+        <div id="hint4" class="hint-text hidden">El arco de Riolan conecta la AMS con la AMI a través de la arteria cólica media. La marginal de Drummond recorre todo el colon.</div>
+      </div>`;
+    
+    case 5: return `
+      <div class="anatomy-diagram">
+        <pre>
+      🔐 CÓDIGO FINAL DEL ESCAPE 🔐
+      
+      Usa la primera letra de cada tipo de rama
+      en orden craneocaudal de aparición:
+      
+      1. Frénicas Inferiores → F
+      2. Suprarrenales → S
+      3. Celíaca → C
+      4. Renales → R
+      5. Mesentérica Superior → M
+      6. Mesentérica Inferior → I
+      7. Gonadales → G
+      8. Lumbares → L
+      9. Sacra Media → S
+        </pre>
+      </div>
+      <p><strong>Forma el código de 9 letras (en orden craneocaudal):</strong></p>
+      <input type="text" id="finalCodeInput" placeholder="Ej: FSC RMI GLS" style="font-size: 1.3em; text-align: center; letter-spacing: 2px;">
+      <br><br>
+      <p><strong>¿Cuál es la última rama visceral par de la aorta abdominal?</strong></p>
+      <div class="puzzle-container">
+        <div class="option-card" onclick="selectOption(this, false)">Renales</div>
+        <div class="option-card" onclick="selectOption(this, true)">Gonadales</div>
+        <div class="option-card" onclick="selectOption(this, false)">Suprarrenales</div>
+      </div>
+      <button class="btn btn-primary" onclick="checkFinalLevel()">¡ESCAPAR!</button>
+      <div style="margin-top: 15px;">
+        <button class="hint-btn" onclick="showHint(5)">💡 Pista</button>
+        <div id="hint5" class="hint-text hidden">F-S-C-R-M-I-G-L-S. La última rama par son las gonadales a nivel de L2.</div>
+      </div>`;
+  }
+}
+
+// ============ LÓGICA DE NIVELES ============
+function selectOption(el, isCorrect) {
+  el.classList.toggle('selected');
+  el.dataset.correct = isCorrect;
+}
+
+function checkLevel1() {
+  const selected = document.querySelectorAll('#levelContent .option-card.selected');
+  const correctSelected = document.querySelectorAll('#levelContent .option-card[data-correct="true"]');
+  let allCorrect = selected.length === correctSelected.length;
+  selected.forEach(el => {
+    if (el.dataset.correct === 'true') el.classList.add('correct');
+    else { el.classList.add('incorrect'); allCorrect = false; }
+    el.classList.add('disabled');
+  });
+  document.querySelectorAll('#levelContent .option-card:not(.selected)').forEach(el => {
+    if (el.dataset.correct === 'true') el.classList.add('correct');
+    el.classList.add('disabled');
+  });
+  if (allCorrect) {
+    showFeedback('¡Correcto! Has identificado todas las ramas parietales.', 'success');
+    addScore(100);
+    completeLevel('FLS');
+  } else {
+    showFeedback('Hay errores en tu selección. Revisa las ramas marcadas.', 'error');
+    loseLife();
+  }
+}
+
+function checkLevel2() {
+  const q1 = document.getElementById('q2_1').value;
+  const q2 = document.getElementById('q2_2').value;
+  const q3 = document.getElementById('q2_3').value;
+  const sel = document.querySelector('#levelContent .option-card.selected');
+  let correct = q1 === '1' && q2 === '1' && q3 === '1' && sel && sel.dataset.correct === 'true';
+  
+  if (correct) {
+    showFeedback('¡Excelente! Dominas los territorios de irrigación.', 'success');
+    addScore(150);
+    completeLevel('VISI');
+  } else {
+    showFeedback('Revisa los territorios y la rama de la esplénica.', 'error');
+    loseLife();
+  }
+  if (sel) { sel.classList.add(sel.dataset.correct === 'true' ? 'correct' : 'incorrect'); sel.classList.add('disabled'); }
+}
+
+let dropOrder = [];
+function allowDrop(ev) { ev.preventDefault(); }
+function drop(ev) {
+  ev.preventDefault();
+  const data = ev.dataTransfer.getData('text');
+  if (data) {
+    const el = document.querySelector(`.drag-item[data-value="${data}"]`);
+    if (el && !ev.target.hasChildNodes()) {
+      ev.target.appendChild(el);
+      dropOrder = Array.from(document.querySelectorAll('.drop-zone')).map(z => z.firstChild?.dataset.value).filter(Boolean);
+    }
+  }
+}
+document.addEventListener('dragstart', e => { if (e.target.classList.contains('drag-item')) e.dataTransfer.setData('text', e.target.dataset.value); });
+
+function checkLevel3() {
+  const sel = document.querySelector('#levelContent .option-card.selected');
+  const orderCorrect = dropOrder.join(',') === 'suprarenal,renal,gonadal' || dropOrder.join(',') === 'suprarenal,renal,gonadal';
+  const selCorrect = sel && sel.dataset.correct === 'true';
+  
+  if (orderCorrect && selCorrect) {
+    showFeedback('¡Perfecto! Orden craneocaudal correcto.', 'success');
+    addScore(120);
+    completeLevel('PAIR');
+  } else {
+    showFeedback('El orden o la selección son incorrectos.', 'error');
+    loseLife();
+  }
+  if (sel) { sel.classList.add(sel.dataset.correct === 'true' ? 'correct' : 'incorrect'); sel.classList.add('disabled'); }
+}
+
+function checkLevel4() {
+  const selected = document.querySelectorAll('#levelContent .option-card.selected');
+  const correctOnes = document.querySelectorAll('#levelContent .option-card[data-correct="true"]');
+  let allCorrect = selected.length === correctOnes.length;
+  selected.forEach(el => {
+    if (el.dataset.correct === 'true') el.classList.add('correct');
+    else { el.classList.add('incorrect'); allCorrect = false; }
+    el.classList.add('disabled');
+  });
+  document.querySelectorAll('#levelContent .option-card:not(.selected)').forEach(el => {
+    if (el.dataset.correct === 'true') el.classList.add('correct');
+    el.classList.add('disabled');
+  });
+  if (allCorrect) {
+    showFeedback('¡Correcto! Dominas las anastomosis abdominales.', 'success');
+    addScore(200);
+    completeLevel('ANAS');
+  } else {
+    showFeedback('Hay errores en las anastomosis.', 'error');
+    loseLife();
+  }
+}
+
+function checkFinalLevel() {
+  const code = document.getElementById('finalCodeInput').value.toUpperCase().replace(/\s/g, '');
+  const sel = document.querySelector('#levelContent .option-card.selected');
+  const codeCorrect = code === 'FSC RMIGLS' || code === 'FSCRMIGLS' || code === 'FSC RMI GLS';
+  const selCorrect = sel && sel.dataset.correct === 'true';
+  
+  if (codeCorrect && selCorrect) {
+    showFeedback('¡CÓDIGO CORRECTO! ¡HAS ESCAPADO!', 'success');
+    addScore(500);
+    completeLevel('ESCAPE');
+    setTimeout(showVictory, 1500);
+  } else {
+    showFeedback('Código incorrecto o selección errónea.', 'error');
+    loseLife();
+  }
+}
+
+// ============ UTILIDADES ============
+function completeLevel(code) {
+  clearInterval(timerInterval);
+  document.getElementById('levelCodeSection').classList.remove('hidden');
+  document.getElementById('levelCodeText').textContent = `Código: ${code}`;
+  const s = state.currentStudent;
+  s.completedLevels.push(currentLevel);
+  s.timePerLevel[currentLevel] = (state.settings.timePerLevel * 60 - timeLeft) / 60;
+  s.level = currentLevel + 1;
+  saveState();
+}
+
+function nextLevel() {
+  if (currentLevel >= 5) { showVictory(); return; }
+  loadLevel(currentLevel + 1);
+}
+
+function addScore(points) {
+  state.currentStudent.score += points;
+  document.getElementById('score').textContent = state.currentStudent.score;
+  saveState();
+}
+
+function loseLife() {
+  state.currentStudent.lives--;
+  document.getElementById('lives').textContent = '❤️'.repeat(state.currentStudent.lives) + '🖤'.repeat(3 - state.currentStudent.lives);
+  saveState();
+  if (state.currentStudent.lives <= 0) {
+    clearInterval(timerInterval);
+    alert('¡Te has quedado sin vidas! Reiniciando nivel...');
+    loadLevel(currentLevel);
+    state.currentStudent.lives = 3;
+    saveState();
+  }
+}
+
+function showFeedback(msg, type) {
+  document.getElementById('gameFeedback').innerHTML = `<div class="feedback ${type}">${msg}</div>`;
+}
+
+function showHint(num) {
+  document.getElementById('hint' + num).classList.toggle('hidden');
+}
+
+function showVictory() {
+  const s = state.currentStudent;
+  s.level = 6;
+  saveState();
+  document.getElementById('victoryContent').innerHTML = `
+    <p style="font-size: 1.2em; margin: 20px 0;"><strong>${s.name}</strong>, has completado el Escape Room de la Aorta Abdominal.</p>
+    <div class="code-display">FSC RMIGLS</div>
+    <p><strong>Puntaje final:</strong> ${s.score} puntos</p>
+    <p><strong>Tiempo total:</strong> ${Math.round(Object.values(s.timePerLevel || {}).reduce((a,b)=>a+b,0))} minutos</p>
+    <p style="margin-top: 20px; color: #666;">Has dominado: Ramas parietales, viscerales impares y pares, divisiones, territorios y anastomosis.</p>
+  `;
+  showScreen('victoryScreen');
+}
+
+function logout() {
+  state.currentStudent = null;
+  state.adminLoggedIn = false;
+  showScreen('mainMenu');
+}
+
+// Inicializar
+loadState();
+</script>
+</body>
+</html>
